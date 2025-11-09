@@ -4,8 +4,8 @@ ENV CGO_ENABLED=0
 
 WORKDIR /app
 
-# COPY go.mod go.sum ./
-# RUN go mod download
+COPY go.mod go.sum ./
+RUN go mod download
 
 
 COPY . .
@@ -18,7 +18,7 @@ WORKDIR /app
 
 RUN apk --no-cache add ca-certificates tzdata
 COPY --from=builder /app/server .
-# COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 EXPOSE 8080
 
