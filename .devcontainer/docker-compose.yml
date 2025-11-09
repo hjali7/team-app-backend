@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/go:1.23
+    volumes:
+      - ..:/workspaces/team-app-backend:cached
+
+    command: sleep infinity
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_USER=team_user_local
+      - POSTGRES_PASSWORD=LocalPassword123!
+      - POSTGRES_DB=team_app_db_local
+      - POSTGRES_PORT=5432
+    
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres-data-local:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=team_user_local
+      - POSTGRES_PASSWORD=LocalPassword123!
+      - POSTGRES_DB=team_app_db_local
+  
+volumes:
+  postgres-data-local:

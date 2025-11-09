@@ -1,9 +1,12 @@
 {
-    "name": "Go Backend (team-app)",
-    "image": "mcr.microsoft.com/devcontainers/go:1.22",
+    "name": "Go Backend (w/DB)",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "app" ,
+    "workspaceFolder": "/workspaces/team-app-backend",
     "features": {
         "ghcr.io/devcontainers/features/docker-from-docker:1": {
-            "version": "latest"
+            "version": "latest",
+            "moby" : false
         }
     },
     "customizations": {
@@ -13,6 +16,5 @@
             ]
         }
     },
-    "forwardPorts": [8080],
     "remoteUser": "vscode"
 }
