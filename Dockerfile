@@ -18,7 +18,6 @@ WORKDIR /app
 
 RUN apk --no-cache add ca-certificates tzdata
 COPY --from=builder /app/server .
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 EXPOSE 8080
 
