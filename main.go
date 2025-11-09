@@ -26,7 +26,7 @@ func main() {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Welcome to the team-app-backend! API is running.")
+	fmt.Fprintln(w, "Welcome to the team-app-backend! API is running v2.")
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
