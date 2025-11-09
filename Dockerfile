@@ -10,7 +10,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /app/server -ldflags="-s -w" ./main.go
+RUN go build -o /app/server -ldflags="-s -w" .
 
 FROM alpine:latest
 
