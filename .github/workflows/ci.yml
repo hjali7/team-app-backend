@@ -53,7 +53,7 @@ jobs:
           cd platform-config
           
           # آدرس ایمیج جدید به 'team-app-backend' تغییر کرد
-          NEW_IMAGE_URL="ghcr.io/${{ github.repository_owner }}/team-app-backend:${{ github.sha }}"
+          export NEW_IMAGE_URL="ghcr.io/${{ github.repository_owner }}/team-app-backend:${{ github.sha }}"
           
           # !!! بسیار مهم: این مسیر را باید با مسیر فایل دیپلوی بک‌اند خود جایگزین کنید
           yq -i '.spec.template.spec.containers[0].image = strenv(NEW_IMAGE_URL)' base/02-backend-deployment.yaml
