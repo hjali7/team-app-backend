@@ -1,4 +1,4 @@
-name: CI - Build and Push Backend Image
+name: CI/CD - Build, Push, and Deploy Backend
 
 on:
   push:
@@ -10,13 +10,12 @@ permissions:
   packages: write
 
 jobs:
-  build-and-push:
-    name: Build and Push to ghcr.io
-    
+  build-push-deploy:
+    name: Build, Push, and Deploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Backend code
         uses: actions/checkout@v4
 
       - name: Log in to ghcr.io
@@ -27,10 +26,46 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
+        id: build_image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/team-app-backend:latest
-            ghcr.io/${{ github.repository_owner }}/team-app-backend:${{ github.sha }}
+          # تگ ایمیج به 'team-app-backend' تغییر کرد
+          tags: ghcr.io/${{ github.repository_owner }}/team-app-backend:${{ github.sha }}
+
+      # --- بخش CD ---
+
+      - name: Install yq
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: Checkout Platform Config repo
+        uses: actions/checkout@v4
+        with:
+          repository: hjali7/team-app-platform-config
+          path: platform-config
+          token: ${{ secrets.PLATFORM_CONFIG_TOKEN }} # از همان توکن استفاده می‌کنیم
+
+      - name: Update image tag in platform-config
+        run: |
+          cd platform-config
+          
+          # آدرس ایمیج جدید به 'team-app-backend' تغییر کرد
+          NEW_IMAGE_URL="ghcr.io/${{ github.repository_owner }}/team-app-backend:${{ github.sha }}"
+          
+          # !!! بسیار مهم: این مسیر را باید با مسیر فایل دیپلوی بک‌اند خود جایگزین کنید
+          yq -i '.spec.template.spec.containers[0].image = strenv(NEW_IMAGE_URL)' base/02-backend-deployment.yaml
+          
+          git config --global user.name "GitHub Actions (Backend)"
+          git config --global user.email "actions@github.com"
+          
+          git add .
+          if git diff-index --quiet HEAD; then
+            echo "No changes to deploy."
+          else
+            # پیام کامیت برای بک‌اند تغییر کرد
+            git commit -m "feat(backend): update backend image to ${{ github.sha }}"
+            git push
+          fi
