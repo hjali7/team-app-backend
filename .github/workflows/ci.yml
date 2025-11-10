@@ -26,13 +26,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        id: build_image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/team-app-backend:${{ github.sha }}
-
 
       - name: Install yq
         run: |
@@ -50,11 +48,11 @@ jobs:
         run: |
           cd platform-config
           
-          # آدرس ایمیج جدید به 'team-app-backend' تغییر کرد
+          # متغیر را export می‌کنیم
           export NEW_IMAGE_URL="ghcr.io/${{ github.repository_owner }}/team-app-backend:${{ github.sha }}"
           
-          # !!! بسیار مهم: این مسیر را باید با مسیر فایل دیپلوی بک‌اند خود جایگزین کنید
-          yq -i '(kind == "Deployment") .spec.template.spec.containers[0].image = strenv(NEW_IMAGE_URL)' base/02-backend-deployment.yaml
+          # (FIX) از دستور yq دقیق‌تری استفاده می‌کنیم که مستقیماً نام دیپلوی را هدف می‌گیرد
+          yq -i 'select(.metadata.name == "backend-deployment") | .spec.template.spec.containers[0].image = strenv(NEW_IMAGE_URL)' base/02-backend-deployment.yaml
           
           git config --global user.name "GitHub Actions (Backend)"
           git config --global user.email "actions@github.com"
@@ -63,7 +61,6 @@ jobs:
           if git diff-index --quiet HEAD; then
             echo "No changes to deploy."
           else
-            
             git commit -m "feat(backend): update backend image to ${{ github.sha }}"
             git push
           fi
