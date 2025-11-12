@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// handleHealthCheck (نسخه بازآرایی شده)
 func (s *Server) handleHealthCheck() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		serverStatus := "ok"
@@ -20,7 +20,6 @@ func (s *Server) handleHealthCheck() http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 
-		// استفاده از pool تزریق شده
 		if err := s.db.Ping(ctx); err != nil {
 			dbStatus = "error"
 			dbError = err.Error()
@@ -41,16 +40,19 @@ func (s *Server) handleHealthCheck() http.HandlerFunc {
 }
 
 
-// --- بخش جدید برای ثبت نام ---
 
 type RegistrationRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=8"`
 }
 
+type LoginRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+}
+
 var validate = validator.New()
 
-// handleRegister تابع ما برای ثبت نام
 func (s *Server) handleRegister() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RegistrationRequest
@@ -71,10 +73,8 @@ func (s *Server) handleRegister() http.HandlerFunc {
 			return
 		}
 
-		// صدا زدن لایه Store
 		newUser, err := s.userStore.CreateUser(req.Email, string(hashedPassword))
 		if err != nil {
-			// TODO: ارور ایمیل تکراری را بهتر مدیریت کنیم
 			http.Error(w, "Failed to create user", http.StatusInternalServerError)
 			return
 		}
@@ -82,5 +82,39 @@ func (s *Server) handleRegister() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(newUser)
+	}
+}
+
+func (s *Server) handleLogin() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req LoginRequest
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+		if err := validate.Struct(req); err != nil {
+			http.Error(w, "Invalid data: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		user, err := s.userStore.GetUserByEmail(req.Email)
+		if err != nil {
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(req.Password))
+		if err != nil {
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "Login successful",
+			"user_id": fmt.Sprintf("%d", user.ID), // تبدیل id به string برای JSON
+		})
 	}
 }

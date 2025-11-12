@@ -7,15 +7,13 @@ import (
 
 func (s *Server) registerRoutes() {
 	// Middlewares
-	s.router.Use(middleware.Logger)     // لاگ کردن درخواست‌ها
-	s.router.Use(middleware.Recoverer) // جلوگیری از کرش
+	s.router.Use(middleware.Logger)
+	s.router.Use(middleware.Recoverer)
 
-	// مسیر Health Check
 	s.router.Get("/health", s.handleHealthCheck())
 	
-	// گروه مسیرهای احراز هویت
 	s.router.Route("/api/auth", func(r chi.Router) {
 		r.Post("/register", s.handleRegister())
-		// r.Post("/login", s.handleLogin()) // (بعداً اضافه می‌شود)
+		r.Post("/login", s.handleLogin()) 
 	})
 }

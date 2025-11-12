@@ -19,6 +19,34 @@ type Store struct {
 	db *pgxpool.Pool
 }
 
+type UserWithPassword struct {
+	ID	int
+	Email	string
+	HashedPassword	string
+}
+
+
+func (s *Store) GetUserByEmail(email string) ( *UserWithPassword, error) {
+	query := `
+		SELECT id, email , hashed_password
+		FROM users
+		WHERE email = $1
+	`
+	u := new(UserWithPassword)
+
+	err := s.db.QueryRow(context.Background(), query, email).Scan(
+		&u.ID,
+		&u.Email,
+		&u.HashedPassword,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
 func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
 }
