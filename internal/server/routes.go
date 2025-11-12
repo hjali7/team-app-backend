@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Server) registerRoutes() {
-	// Middlewares
+	// CORS
 	s.router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://team.looparc.ir"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -21,5 +21,11 @@ func (s *Server) registerRoutes() {
 	s.router.Route("/api/auth", func(r chi.Router) {
 		r.Post("/register", s.handleRegister())
 		r.Post("/login", s.handleLogin()) 
+	})
+
+	s.router.Route("/api/users", func(r chi.Router) {
+		r.Use(s.AuthMiddleware)
+
+		r.Get("/me", s.handleGetUserMe())
 	})
 }
