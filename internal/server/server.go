@@ -15,28 +15,25 @@ type Server struct {
 	router *chi.Mux
 	db     *pgxpool.Pool
 
-	// وابستگی‌های دیگر
 	userStore *user.Store
+	jwtSecret	string
 }
 
-// NewServer سرور جدید را با وابستگی‌ها می‌سازد
-func NewServer(dbPool *pgxpool.Pool) *Server {
+func NewServer(dbPool *pgxpool.Pool, jwtSecret string) *Server {
 	
-	// وابستگی‌های Store را می‌سازیم
 	userStore := user.NewStore(dbPool)
 
 	s := &Server{
 		router: chi.NewRouter(),
 		db:     dbPool,
-		userStore: userStore, // تزریق وابستگی
+		userStore: userStore,
+		jwtSecret: jwtSecret,
 	}
 
-	// مسیرها (routes) را ثبت می‌کنیم
 	s.registerRoutes()
 	return s
 }
 
-// ServeHTTP این تابع http.Handler را پیاده‌سازی می‌کند
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }

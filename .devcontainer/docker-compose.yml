@@ -18,6 +18,7 @@ services:
       - POSTGRES_PASSWORD=LocalPassword123!
       - POSTGRES_DB=team_app_db_local
       - POSTGRES_PORT=5432
+      - JWT_SECRET=my_super_secret_key_for_local_dev_12345
     
   db:
     image: postgres:16-alpine

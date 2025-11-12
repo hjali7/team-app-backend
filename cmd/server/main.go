@@ -10,17 +10,19 @@ import (
 )
 
 func main() {
-	// ۱. راه‌اندازی وابستگی‌ها (دیتابیس)
 	dbPool, err := database.InitDB()
 	if err != nil {
 		log.Fatal("Failed to initialize database:", err)
 	}
-	defer dbPool.Close() // بستن pool هنگام خروج
+	defer dbPool.Close()
 
-	// ۲. ساختن سرور (تزریق وابستگی)
-	srv := server.NewServer(dbPool)
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable is not set")
+	}
 
-	// ۳. راه‌اندازی سرور
+	srv := server.NewServer(dbPool, jwtSecret)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -28,7 +30,6 @@ func main() {
 
 	log.Printf("Starting backend server on http://localhost:%s\n", port)
 	
-    // srv (سرور ما) حالا http.Handler است
 	if err := http.ListenAndServe(":"+port, srv); err != nil {
 		log.Fatal(err)
 	}

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
-	"fmt"
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
@@ -110,11 +110,24 @@ func (s *Server) handleLogin() http.HandlerFunc {
 			return
 		}
 
+		claims := jwt.MapClaims{
+			"sub": user.ID,
+			"iat": time.Now().Unix(),
+			"exp": time.Now().Add(time.Hour * 24).Unix(),
+		}
+
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+		tokenString, err := token.SignedString([]byte(s.jwtSecret))
+		if err != nil {
+			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{
-			"message": "Login successful",
-			"user_id": fmt.Sprintf("%d", user.ID), // تبدیل id به string برای JSON
+			"token": tokenString,
 		})
 	}
 }
