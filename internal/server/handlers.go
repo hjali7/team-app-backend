@@ -131,3 +131,23 @@ func (s *Server) handleLogin() http.HandlerFunc {
 		})
 	}
 }
+
+func (s *Server) handleGetUserMe() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := r.Context().Value(userContextKey).(int)
+		if !ok {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		user, err := s.userStore.GetUserByID(userID)
+		if err != nil {
+			http.Error(w, "User not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(user)
+	}
+}

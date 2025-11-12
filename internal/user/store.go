@@ -74,3 +74,27 @@ func (s *Store) CreateUser(email, hashedPassword string) (*User, error) {
 
 	return u, nil
 }
+
+func (s *Store) GetUserByID(id int) (*User, error) {
+	query := `
+		SELECT id, email, google_id, github_id, created_at 
+		FROM users 
+		WHERE id = $1
+	`
+	
+	u := new(User)
+
+	err := s.db.QueryRow(context.Background(), query, id).Scan(
+		&u.ID,
+		&u.Email,
+		&u.GoogleID,
+		&u.GithubID,
+		&u.CreatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
